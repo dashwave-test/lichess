@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lichess_mobile/l10n/l10n.dart';
 import 'package:lichess_mobile/src/model/broadcast/broadcast_providers.dart';
+import 'package:lichess_mobile/src/network/connectivity.dart';
 import 'package:lichess_mobile/src/utils/l10n_context.dart';
 import 'package:lichess_mobile/src/utils/navigation.dart';
 import 'package:lichess_mobile/src/view/broadcast/broadcast_list_tile.dart';
@@ -155,9 +156,56 @@ class _Body extends ConsumerWidget {
             ],
           );
         },
-        error: (_, _) => const Center(child: Text('Cannot load broadcasts')),
+        error: (error, stackTrace) {
+          final connectivity = ref.watch(connectivityChangesProvider);
+          return Center(
+            child: connectivity.whenIs(
+              online: () => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(context.l10n.mobileSomethingWentWrong),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.refresh(broadcastsPaginatorProvider),
+                    child: Text(context.l10n.reload),
+                  ),
+                ],
+              ),
+              offline: () => _Disconnected(
+                onReconnect: () => ref.refresh(broadcastsPaginatorProvider),
+              ),
+            ),
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator.adaptive()),
       ),
+    );
+  }
+}
+
+class _Disconnected extends StatelessWidget {
+  const _Disconnected({
+    this.onReconnect,
+  });
+
+  final VoidCallback? onReconnect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.signal_wifi_off),
+        const SizedBox(height: 16),
+        Text(context.l10n.youAreOffline),
+        if (onReconnect != null) ...[
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: onReconnect,
+            child: Text(context.l10n.reload),
+          ),
+        ],
+      ],
     );
   }
 }

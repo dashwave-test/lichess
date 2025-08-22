@@ -11,6 +11,7 @@ import 'package:lichess_mobile/src/styles/styles.dart';
 import 'package:lichess_mobile/src/utils/screen.dart';
 import 'package:lichess_mobile/src/view/engine/engine_gauge.dart';
 import 'package:lichess_mobile/src/widgets/move_list.dart';
+import 'package:lichess_mobile/src/widgets/non_visual_board.dart';
 
 typedef InteractiveBoardParams = ({
   Variant variant,
@@ -132,6 +133,7 @@ class _BoardTableState extends ConsumerState<BoardTable> {
   @override
   Widget build(BuildContext context) {
     final boardPrefs = ref.watch(boardPreferencesProvider);
+    final mediaQueryData = MediaQuery.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -183,18 +185,32 @@ class _BoardTableState extends ConsumerState<BoardTable> {
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                _BoardWidget(
-                  size: boardSize,
-                  fen: fen,
-                  orientation: widget.orientation,
-                  gameData: gameData,
-                  lastMove: widget.lastMove,
-                  shapes: shapes,
-                  settings: settings,
-                  boardKey: widget.boardKey,
-                  boardOverlay: widget.boardOverlay,
-                  error: widget.errorMessage,
-                ),
+                if (mediaQueryData.accessibleNavigation)
+                  NonVisualBoard(
+                    size: boardSize,
+                    fen: fen,
+                    orientation: widget.orientation,
+                    gameData: gameData,
+                    lastMove: widget.lastMove,
+                    shapes: shapes,
+                    settings: settings,
+                    boardKey: widget.boardKey,
+                    boardOverlay: widget.boardOverlay,
+                    error: widget.errorMessage,
+                  )
+                else
+                  _BoardWidget(
+                    size: boardSize,
+                    fen: fen,
+                    orientation: widget.orientation,
+                    gameData: gameData,
+                    lastMove: widget.lastMove,
+                    shapes: shapes,
+                    settings: settings,
+                    boardKey: widget.boardKey,
+                    boardOverlay: widget.boardOverlay,
+                    error: widget.errorMessage,
+                  ),
                 if (widget.engineGauge != null) ...[
                   const SizedBox(width: 4.0),
                   EngineGauge(
@@ -283,18 +299,31 @@ class _BoardTableState extends ConsumerState<BoardTable> {
                 padding: isTablet
                     ? const EdgeInsets.symmetric(horizontal: kTabletBoardTableSidePadding)
                     : EdgeInsets.zero,
-                child: _BoardWidget(
-                  size: boardSize,
-                  fen: fen,
-                  orientation: widget.orientation,
-                  gameData: gameData,
-                  lastMove: widget.lastMove,
-                  shapes: shapes,
-                  settings: settings,
-                  boardKey: widget.boardKey,
-                  boardOverlay: widget.boardOverlay,
-                  error: widget.errorMessage,
-                ),
+                child: mediaQueryData.accessibleNavigation
+                    ? NonVisualBoard(
+                        size: boardSize,
+                        fen: fen,
+                        orientation: widget.orientation,
+                        gameData: gameData,
+                        lastMove: widget.lastMove,
+                        shapes: shapes,
+                        settings: settings,
+                        boardKey: widget.boardKey,
+                        boardOverlay: widget.boardOverlay,
+                        error: widget.errorMessage,
+                      )
+                    : _BoardWidget(
+                        size: boardSize,
+                        fen: fen,
+                        orientation: widget.orientation,
+                        gameData: gameData,
+                        lastMove: widget.lastMove,
+                        shapes: shapes,
+                        settings: settings,
+                        boardKey: widget.boardKey,
+                        boardOverlay: widget.boardOverlay,
+                        error: widget.errorMessage,
+                      ),
               ),
               Expanded(
                 child: Padding(
@@ -325,7 +354,6 @@ class _BoardTableState extends ConsumerState<BoardTable> {
       });
     }
   }
-
   void _onClearShapes() {
     if (!mounted) return;
 
